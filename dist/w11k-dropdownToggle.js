@@ -1,5 +1,5 @@
 /**
- * w11k-dropdownToggle - v0.1.0 - 2014-03-05
+ * w11k-dropdownToggle - v0.1.1 - 2014-03-29
  * https://github.com/w11k/w11k-dropdownToggle
  *
  * Copyright (c) 2014 WeigleWilczek GmbH
@@ -53,8 +53,8 @@ angular.module("w11k.dropdownToggle").directive("w11kDropdownToggle", [ "$docume
                     var callbackResult = executeCallback(ctrl.shared.onOpen, domEvent);
                     if (callbackResult.isPrevented === false) {
                         $element.parent().addClass("open");
-                        $element.parent().bind("click", preventCloseMenu);
-                        $document.bind("click", domClose);
+                        $element.parent().on("click", preventCloseMenu);
+                        $document.on("click", domClose);
                         removeLocationChangeSuccessListener = $scope.$on("$locationChangeSuccess", function() {
                             ctrl.close();
                         });
@@ -76,21 +76,29 @@ angular.module("w11k.dropdownToggle").directive("w11kDropdownToggle", [ "$docume
                     ctrl.close();
                 });
             };
+            function removeHandlers() {
+                $element.parent().off("click", preventCloseMenu);
+                $document.off("click", domClose);
+                if (angular.isFunction(removeLocationChangeSuccessListener)) {
+                    removeLocationChangeSuccessListener();
+                    removeLocationChangeSuccessListener = undefined;
+                }
+            }
             ctrl.close = function(domEvent) {
                 if (ctrl.isOpen) {
                     var callbackResult = executeCallback(ctrl.shared.onClose, domEvent);
                     if (callbackResult.isPrevented === false) {
                         $element.parent().removeClass("open");
-                        $element.parent().unbind("click", preventCloseMenu);
-                        $document.unbind("click", domClose);
-                        removeLocationChangeSuccessListener();
-                        removeLocationChangeSuccessListener = null;
+                        removeHandlers();
                         ctrl.isOpen = false;
                         currentOpenDropdownCtrl = null;
                     }
                 }
                 return !ctrl.isOpen;
             };
+            $scope.$on("$destroy", function() {
+                removeHandlers();
+            });
         } ],
         link: function(scope, element, attrs, ctrl) {
             var domToggle = function(domEvent) {
@@ -100,7 +108,10 @@ angular.module("w11k.dropdownToggle").directive("w11kDropdownToggle", [ "$docume
                     ctrl.toggle();
                 });
             };
-            element.bind("click", domToggle);
+            element.on("click", domToggle);
+            scope.$on("$destroy", function() {
+                element.off("click", domToggle);
+            });
             function shareCtrlFunctions(shared) {
                 shared.open = ctrl.open;
                 shared.close = ctrl.close;
@@ -109,14 +120,12 @@ angular.module("w11k.dropdownToggle").directive("w11kDropdownToggle", [ "$docume
                     return ctrl.isOpen;
                 };
             }
-            var removeAttrObserver = attrs.$observe("w11kDropdownToggle", function(attrValue) {
+            attrs.$observe("w11kDropdownToggle", function(attrValue) {
                 if (angular.isDefined(attrValue) && attrValue !== "") {
                     var shared = scope.$eval(attrValue);
                     if (angular.isObject(shared)) {
                         ctrl.shared = shared;
                         shareCtrlFunctions(shared);
-                        removeAttrObserver();
-                        removeAttrObserver = null;
                     }
                 }
             });
