@@ -1,8 +1,8 @@
 /**
- * w11k-dropdownToggle - v0.2.0 - 2014-09-29
+ * w11k-dropdownToggle - v1.0.0 - 2016-02-03
  * https://github.com/w11k/w11k-dropdownToggle
  *
- * Copyright (c) 2014 WeigleWilczek GmbH
+ * Copyright (c) 2016 w11k GmbH
  */
 "use strict";
 
